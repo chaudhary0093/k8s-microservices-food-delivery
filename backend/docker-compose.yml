@@ -1,0 +1,107 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  user-service:
+    build: ./user-service
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - MONGO_URI=mongodb://mongo:27017/user-service
+      - JWT_SECRET=supersecretkey
+    depends_on:
+      - mongo
+    networks:
+      - backend
+
+  restaurant-service:
+    build: ./restaurant-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - MONGO_URI=mongodb://mongo:27017/restaurant-service
+    depends_on:
+      - mongo
+    networks:
+      - backend
+
+  cart-service:
+    build: ./cart-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - MONGO_URI=mongodb://mongo:27017/cart-service
+      - JWT_SECRET=supersecretkey
+    depends_on:
+      - mongo
+      - user-service
+    networks:
+      - backend
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - MONGO_URI=mongodb://mongo:27017/order-service
+      - JWT_SECRET=supersecretkey
+      - RESTAURANT_SERVICE_URL=http://restaurant-service:3001
+      - DELIVERY_SERVICE_URL=http://delivery-service:3005
+    depends_on:
+      - mongo
+      - cart-service
+      - user-service
+      - restaurant-service
+    networks:
+      - backend
+
+  delivery-service:
+    build: ./delivery-service
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - MONGO_URI=mongodb://mongo:27017/delivery-service
+      - JWT_SECRET=supersecretkey
+      - ORDER_SERVICE_URL=http://order-service:3003
+    depends_on:
+      - mongo
+      - order-service
+    networks:
+      - backend
+
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - MONGO_URI=mongodb://mongo:27017/payment-service
+    depends_on:
+      - mongo
+    networks:
+      - backend
+
+volumes:
+  mongo_data:
+
+networks:
+  backend:

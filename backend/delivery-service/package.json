@@ -1,0 +1,17 @@
+{
+  "name": "delivery-service",
+  "version": "1.0.0",
+  "description": "Delivery service for food delivery app",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "body-parser": "^1.19.0",
+    "dotenv": "^17.0.1",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^5.12.3"
+  }
+}
